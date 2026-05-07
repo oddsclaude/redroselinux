@@ -67,7 +67,6 @@ install-packages: dep
 
 squash-root: strip-bins install-packages dep
 	# TODO: symlink full /usr paths
-	ln -sf rootfs/filesystem/bin/tar rootfs/filesystem/usr/bin/tar
 	ln -sf /proc/mounts rootfs/filesystem/etc/mtab
 	test -f rootfs/filesystem/bin/car || ( \
 		curl -s -L -o rootfs/filesystem/bin/car https://github.com/redroselinux/car/releases/latest/download/car && \

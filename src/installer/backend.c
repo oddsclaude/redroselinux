@@ -225,7 +225,7 @@ int copy_root(char* drive) {
     printf("  Mounting %s\n", get_partition(drive, 3));
     mount(get_partition(drive, 3), "/mnt", "ext2", 0, 0);
     printf("  Extracting /rootfs.tar.gz to /mnt. This may take a while...\n");
-    return system("busybox gzip -dc rootfs.tar.gz | busybox tar -xf - -C /mnt --strip-components=1");
+    return system("pigz -dc rootfs.tar.gz | busybox tar -xf - -C /mnt --strip-components=1");
 }
 
 int install_grub(char* drive) {
@@ -374,14 +374,24 @@ static int umount_detach(char *path) {
 // this function lets them to do so
 int chroot_(char *h) {
     char buf[8];
-    printf("Do you wish to chroot into the mounted system before it's unmounted? [N/y] ");
-    if (fgets(buf, sizeof(buf), stdin)) {
-        if (buf[0] == 'y' || buf[0] == 'Y') {
-            system("busybox chroot /mnt /bin/sh");
+    int done = 0;
+    while (!done) {
+        printf("  Do you wish to chroot into the mounted system before it's unmounted? [N/y/?] ");
+        if (fgets(buf, sizeof(buf), stdin)) {
+            if (buf[0] == 'y' || buf[0] == 'Y') {
+                system("busybox chroot /mnt /bin/sh");
+                done = 1;
+            } else if (buf[0] == '?') {
+                printf("  To chroot into the mounted system means to change\n  the root directory to /mnt and run a shell in it.\n");
+                printf("  This is useful for debugging or making changes to\n  the system before you reboot to it.\n");
+                continue;
+            } else {
+                done = 1;
+            }
         }
     }
 
-    printf("Do you wish to run /bin/sh in this live enviroment? [N/y] ");
+    printf("  Do you wish to run a shell in this live enviroment? [N/y] ");
     if (fgets(buf, sizeof(buf), stdin)) {
         if (buf[0] == 'y' || buf[0] == 'Y') {
             system("/bin/sh");
